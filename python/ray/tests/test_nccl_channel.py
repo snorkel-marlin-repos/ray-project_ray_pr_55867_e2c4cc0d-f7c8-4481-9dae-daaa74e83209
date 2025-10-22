@@ -1,23 +1,23 @@
 # coding: utf-8
 import logging
 import sys
-from typing import Dict, List, Tuple
+import torch
+from typing import List, Dict, Tuple
 
 import pytest
-import torch
 
 import ray
 import ray.cluster_utils
-from ray._private.test_utils import get_actor_node_id
 from ray.experimental.channel.conftest import (
     Barrier,
-    TracedChannel,
     start_nccl_mock,
+    TracedChannel,
 )
+from ray.experimental.channel.torch_tensor_type import TorchTensorType
 from ray.experimental.channel.torch_tensor_accelerator_channel import (
     _init_communicator,
 )
-from ray.experimental.channel.torch_tensor_type import TorchTensorType
+from ray._private.test_utils import get_actor_node_id
 
 logger = logging.getLogger(__name__)
 

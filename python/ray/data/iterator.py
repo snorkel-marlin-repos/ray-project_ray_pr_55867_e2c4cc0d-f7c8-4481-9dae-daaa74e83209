@@ -158,11 +158,6 @@ class DataIterator(abc.ABC):
             local_shuffle_seed=local_shuffle_seed,
         )
 
-    def _create_batch_iterator(
-        self, ref_bundles_iter: Iterator[RefBundle], **kwargs
-    ) -> BatchIterator:
-        return BatchIterator(ref_bundles_iter, **kwargs)
-
     def _iter_batches(
         self,
         *,
@@ -191,7 +186,7 @@ class DataIterator(abc.ABC):
 
             dataset_tag = self._get_dataset_tag()
 
-            batch_iterator = self._create_batch_iterator(
+            batch_iterator = BatchIterator(
                 ref_bundles_iterator,
                 stats=stats,
                 dataset_tag=dataset_tag,

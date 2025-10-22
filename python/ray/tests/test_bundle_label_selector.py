@@ -1,11 +1,12 @@
-import os
 import sys
+import os
 
 import pytest
 
 import ray
-from ray._private.test_utils import placement_group_assert_no_leak
+
 from ray.util.scheduling_strategies import PlacementGroupSchedulingStrategy
+from ray._private.test_utils import placement_group_assert_no_leak
 
 
 def test_bundle_label_selector_with_repeated_labels(ray_start_cluster):

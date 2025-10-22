@@ -17,6 +17,8 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"

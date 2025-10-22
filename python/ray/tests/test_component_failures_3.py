@@ -1,8 +1,8 @@
 import sys
 import time
 
-import numpy as np
 import pytest
+import numpy as np
 
 import ray
 import ray._private.ray_constants as ray_constants

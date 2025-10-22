@@ -1,13 +1,13 @@
 import os
-import signal
+import pytest
 import sys
+import signal
 from typing import Optional, Tuple
 
-import pytest
-
 import ray
-from ray._common.test_utils import SignalActor, wait_for_condition
-from ray.exceptions import ActorDiedError, ActorUnavailableError
+from ray.exceptions import ActorUnavailableError, ActorDiedError
+from ray._common.test_utils import SignalActor
+from ray._common.test_utils import wait_for_condition
 
 import psutil  # We must import psutil after ray because we bundle it with ray.
 

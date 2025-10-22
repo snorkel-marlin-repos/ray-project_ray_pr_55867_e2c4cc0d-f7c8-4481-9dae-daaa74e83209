@@ -2,7 +2,6 @@
 This file defines the common pytest fixtures used in current directory.
 """
 
-import copy
 import json
 import logging
 import os
@@ -17,34 +16,34 @@ from pathlib import Path
 from tempfile import gettempdir
 from typing import List, Optional
 from unittest import mock
-
+import psutil
 import pytest
+import copy
 
 import ray
-import ray._private.ray_constants as ray_constants
-from ray._common.network_utils import build_address
 from ray._common.test_utils import wait_for_condition
+import ray._private.ray_constants as ray_constants
 from ray._private.conftest_utils import set_override_dashboard_url  # noqa: F401
+from ray._common.network_utils import build_address
 from ray._private.runtime_env import virtualenv_utils
+
 from ray._private.test_utils import (
-    RayletKiller,
-    external_redis_test_enabled,
-    find_free_port,
     get_and_run_resource_killer,
-    get_redis_cli,
     init_error_pubsub,
     init_log_pubsub,
-    redis_replicas,
-    redis_sentinel_replicas,
-    reset_autoscaler_v2_enabled_cache,
     setup_tls,
+    teardown_tls,
+    external_redis_test_enabled,
+    redis_replicas,
+    get_redis_cli,
     start_redis_instance,
     start_redis_sentinel_instance,
-    teardown_tls,
+    redis_sentinel_replicas,
+    find_free_port,
+    reset_autoscaler_v2_enabled_cache,
+    RayletKiller,
 )
 from ray.cluster_utils import AutoscalingCluster, Cluster, cluster_not_supported
-
-import psutil
 
 # TODO (mengjin) Improve the logging in the conftest files so that the logger can log
 # information in stdout as well as stderr and replace the print statements in the test

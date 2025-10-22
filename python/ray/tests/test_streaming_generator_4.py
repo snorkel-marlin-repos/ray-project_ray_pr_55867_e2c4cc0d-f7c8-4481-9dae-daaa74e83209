@@ -1,14 +1,13 @@
-import asyncio
-import gc
-import os
-import random
-import signal
+import pytest
+import numpy as np
 import sys
 import time
+import gc
+import os
+import signal
+import random
+import asyncio
 from typing import Optional
-
-import numpy as np
-import pytest
 from pydantic import BaseModel
 
 import ray
@@ -23,8 +22,6 @@ RECONSTRUCTION_CONFIG = {
     "task_retry_delay_ms": 100,
     "object_timeout_milliseconds": 200,
     "fetch_warn_timeout_milliseconds": 1000,
-    # Required for reducing the retry time of RequestWorkerLease
-    "raylet_rpc_server_reconnect_timeout_s": 0,
 }
 
 

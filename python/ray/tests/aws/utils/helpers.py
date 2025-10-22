@@ -1,24 +1,23 @@
-import copy
 import os
-from typing import Any, Dict
-
 import yaml
-
 import ray
-from ray.autoscaler._private.aws.cloudwatch.cloudwatch_helper import CloudwatchHelper
+import copy
+from typing import Dict, Any
+
 from ray.autoscaler._private.aws.node_provider import AWSNodeProvider
-from ray.autoscaler._private.commands import prepare_config, validate_config
 from ray.autoscaler.tags import (
+    TAG_RAY_NODE_KIND,
     NODE_KIND_HEAD,
     NODE_KIND_WORKER,
-    TAG_RAY_CLUSTER_NAME,
-    TAG_RAY_NODE_KIND,
     TAG_RAY_USER_NODE_TYPE,
+    TAG_RAY_CLUSTER_NAME,
 )
+from ray.autoscaler._private.commands import prepare_config, validate_config
 from ray.tests.aws.utils.constants import (
     DEFAULT_CLUSTER_NAME,
     DEFAULT_NODE_PROVIDER_INSTANCE_TAGS,
 )
+from ray.autoscaler._private.aws.cloudwatch.cloudwatch_helper import CloudwatchHelper
 
 
 def get_aws_example_config_file_path(file_name):

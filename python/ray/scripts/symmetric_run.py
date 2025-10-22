@@ -1,18 +1,17 @@
 """Symmetric Run for Ray."""
 
-import socket
-import subprocess
-import sys
-import time
 from typing import List
 
 import click
-
 import ray
+import socket
+import psutil
+import subprocess
+import sys
+import time
+
 from ray._private.ray_constants import env_integer
 from ray._raylet import GcsClient
-
-import psutil
 
 CLUSTER_WAIT_TIMEOUT = env_integer("RAY_SYMMETRIC_RUN_CLUSTER_WAIT_TIMEOUT", 30)
 

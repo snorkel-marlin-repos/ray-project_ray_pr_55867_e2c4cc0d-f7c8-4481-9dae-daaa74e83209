@@ -7,8 +7,8 @@ from queue import Queue
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import ray
-from ray.actor import ActorHandle
 from ray.data import DataIterator, Dataset
+from ray.train import BackendConfig, Checkpoint, DataConfig
 from ray.train._internal import session
 from ray.train._internal.session import _TrainingResult
 from ray.train.v2._internal.execution.checkpoint.sync_actor import SynchronizationActor
@@ -17,14 +17,12 @@ from ray.train.v2._internal.util import _copy_doc, invoke_context_managers
 from ray.train.v2.api.config import RunConfig, ScalingConfig
 
 if TYPE_CHECKING:
-    from ray.train import BackendConfig, Checkpoint, DataConfig
     from ray.train.v2._internal.data_integration.interfaces import (
         DatasetShardMetadata,
         DatasetShardProvider,
     )
     from ray.train.v2._internal.execution.callback import TrainContextCallback
     from ray.train.v2._internal.execution.worker_group.thread_runner import ThreadRunner
-    from ray.train.v2.api.reported_checkpoint import ReportedCheckpoint
 
 
 logger = logging.getLogger(__file__)
@@ -47,13 +45,13 @@ class TrainRunContext:
     scaling_config: ScalingConfig
 
     # The configuration for the training backend (e.g., PyTorch, XGBoost).
-    backend_config: "BackendConfig"
+    backend_config: BackendConfig
 
     # The datasets used in the current training run.
     datasets: Dict[str, Dataset]
 
     # The configuration for dataset ingestion and sharding.
-    dataset_config: "DataConfig"
+    dataset_config: DataConfig
 
     def get_run_config(self) -> RunConfig:
         """Returns the run config of the current training run."""
@@ -98,11 +96,8 @@ class TrainContext:
     distributed_context: DistributedContext
     execution_context: ExecutionContext
     storage_context: StorageContext
-    controller_actor: ActorHandle
-
     dataset_shard_provider: "DatasetShardProvider"
-    checkpoint: Optional["Checkpoint"] = None
-    num_report_calls: int = 0
+    checkpoint: Optional[Checkpoint] = None
 
     @_copy_doc(session.get_experiment_name)
     def get_experiment_name(self) -> str:
@@ -141,13 +136,6 @@ class TrainContext:
 
     def get_checkpoint(self):
         return self.checkpoint
-
-    def get_all_reported_checkpoints(self) -> List["ReportedCheckpoint"]:
-        return ray.get(
-            self.controller_actor.get_all_reported_checkpoints.remote(
-                self.num_report_calls
-            )
-        )
 
     def get_dataset_shard(self, dataset_info: "DatasetShardMetadata") -> DataIterator:
         """Returns the :class:`ray.data.DataIterator` shard for this worker.
@@ -201,14 +189,9 @@ class TrainContext:
         self,
         checkpoint_dir_name: str,
         metrics: Dict[str, Any],
-        checkpoint: Optional["Checkpoint"] = None,
+        checkpoint: Optional[Checkpoint] = None,
     ) -> _TrainingResult:
         """Save the checkpoint to remote storage.
-
-        Args:
-            checkpoint_dir_name: The checkpoint dir to persist to.
-            metrics: The metrics to report.
-            checkpoint: The checkpoint to report.
 
         Returns:
             The training result object containing the persisted checkpoint.
@@ -229,7 +212,7 @@ class TrainContext:
     def report(
         self,
         metrics: Dict[str, Any],
-        checkpoint: Optional["Checkpoint"] = None,
+        checkpoint: Optional[Checkpoint] = None,
         checkpoint_dir_name: Optional[str] = None,
     ) -> None:
         """
@@ -282,7 +265,6 @@ class TrainContext:
             # TODO (hpguo): Add a metrics to track the blocking time waiting for the
             # training result to be consumed by the controller.
             self.get_result_queue().put(training_result)
-            self.num_report_calls += 1
 
 
 # The global variable holding the current TrainContext

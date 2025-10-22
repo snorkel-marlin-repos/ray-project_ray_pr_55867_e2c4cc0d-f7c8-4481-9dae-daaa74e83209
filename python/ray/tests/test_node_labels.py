@@ -1,15 +1,14 @@
 import os
-import subprocess
 import sys
+import pytest
+import subprocess
 import tempfile
 from unittest.mock import patch
-
-import pytest
+from ray._private.accelerators.tpu import TPUAcceleratorManager
 
 import ray
-from ray._common.test_utils import wait_for_condition
-from ray._private.accelerators.tpu import TPUAcceleratorManager
 from ray.cluster_utils import AutoscalingCluster
+from ray._common.test_utils import wait_for_condition
 
 
 def check_cmd_stderr(cmd):

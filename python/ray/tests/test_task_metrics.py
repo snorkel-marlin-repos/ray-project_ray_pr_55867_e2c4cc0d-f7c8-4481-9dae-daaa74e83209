@@ -15,6 +15,7 @@ from ray._private.test_utils import (
     wait_for_assertion,
 )
 
+
 METRIC_CONFIG = {
     "_system_config": {
         "metrics_report_interval_ms": 100,

@@ -1,11 +1,9 @@
-import sys
-from contextlib import contextmanager
-from unittest.mock import MagicMock, patch
-
-import pytest
-from click.testing import CliRunner
-
 import ray
+import sys
+import pytest
+from contextlib import contextmanager
+from unittest.mock import patch, MagicMock
+from click.testing import CliRunner
 import ray.scripts.scripts as scripts
 
 

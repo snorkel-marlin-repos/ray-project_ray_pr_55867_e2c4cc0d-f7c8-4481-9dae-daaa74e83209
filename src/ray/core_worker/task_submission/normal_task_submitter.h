@@ -29,8 +29,8 @@
 #include "ray/core_worker/store_provider/memory_store/memory_store.h"
 #include "ray/core_worker/task_manager_interface.h"
 #include "ray/core_worker/task_submission/dependency_resolver.h"
-#include "ray/rpc/raylet/raylet_client_interface.h"
-#include "ray/rpc/raylet/raylet_client_pool.h"
+#include "ray/raylet_client/raylet_client.h"
+#include "ray/rpc/node_manager/raylet_client_pool.h"
 #include "ray/rpc/worker/core_worker_client.h"
 #include "ray/rpc/worker/core_worker_client_pool.h"
 
@@ -113,7 +113,9 @@ class NormalTaskSubmitter {
         cancel_retry_timer_(std::move(cancel_timer)) {}
 
   /// Schedule a task for direct submission to a worker.
-  void SubmitTask(TaskSpecification task_spec);
+  ///
+  /// \param[in] task_spec The task to schedule.
+  Status SubmitTask(TaskSpecification task_spec);
 
   /// Either remove a pending task or send an RPC to kill a running task
   ///
@@ -194,7 +196,7 @@ class NormalTaskSubmitter {
   /// Set up client state for newly granted worker lease.
   void AddWorkerLeaseClient(
       const rpc::Address &addr,
-      const NodeID &node_id,
+      std::shared_ptr<RayletClientInterface> raylet_client,
       const google::protobuf::RepeatedPtrField<rpc::ResourceMapEntry> &assigned_resources,
       const SchedulingKey &scheduling_key,
       const LeaseID &lease_id) ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_);
@@ -276,14 +278,14 @@ class NormalTaskSubmitter {
   const JobID job_id_;
 
   /// A LeaseEntry struct is used to condense the metadata about a single executor:
-  /// (1) The node id of the leased worker.
+  /// (1) The lease client through which the worker should be returned
   /// (2) The expiration time of a worker's lease.
   /// (3) Whether the worker has assigned task to do.
-  /// (4) The resources assigned to the worker
-  /// (5) The SchedulingKey assigned to tasks that will be sent to the worker
-  /// (6) The task id used to obtain the worker lease.
+  /// (5) The resources assigned to the worker
+  /// (6) The SchedulingKey assigned to tasks that will be sent to the worker
+  /// (7) The task id used to obtain the worker lease.
   struct LeaseEntry {
-    NodeID node_id;
+    std::shared_ptr<RayletClientInterface> raylet_client;
     int64_t lease_expiration_time;
     google::protobuf::RepeatedPtrField<rpc::ResourceMapEntry> assigned_resources;
     SchedulingKey scheduling_key;

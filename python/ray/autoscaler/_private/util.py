@@ -13,8 +13,8 @@ from numbers import Number, Real
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import ray
-import ray._private.services as services
 from ray._common.utils import PLACEMENT_GROUP_BUNDLE_RESOURCE_NAME
+import ray._private.services as services
 from ray._private.utils import (
     PLACEMENT_GROUP_INDEXED_BUNDLED_RESOURCE_PATTERN,
     PLACEMENT_GROUP_WILDCARD_RESOURCE_PATTERN,
@@ -756,7 +756,7 @@ def get_constraint_report(request_demand: List[DictCount]):
     if len(constraint_lines) > 0:
         constraints_report = "\n".join(constraint_lines)
     else:
-        constraints_report = " (none)"
+        constraints_report = " (no request_resources() constraints)"
     return constraints_report
 
 
@@ -948,9 +948,9 @@ Resources
 {separator}
 Total Usage:
 {usage_report}
-From request_resources:
+Total Constraints:
 {constraints_report}
-Pending Demands:
+Total Demands:
 {demand_report}"""
 
     if verbose:

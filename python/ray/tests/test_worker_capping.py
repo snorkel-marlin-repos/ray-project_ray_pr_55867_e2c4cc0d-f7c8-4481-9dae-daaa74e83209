@@ -1,10 +1,9 @@
 import asyncio
 import os
+import pytest
 import sys
 import tempfile
 import time
-
-import pytest
 
 import ray
 from ray._common.test_utils import Semaphore

@@ -1,9 +1,8 @@
 import os
+import pytest
 import sys
 import tempfile
 from pathlib import Path
-
-import pytest
 
 import ray
 

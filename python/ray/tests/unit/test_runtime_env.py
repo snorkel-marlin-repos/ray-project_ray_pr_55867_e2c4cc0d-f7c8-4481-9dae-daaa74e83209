@@ -1,17 +1,20 @@
+from dataclasses import dataclass
 import dataclasses
 import json
 import os
 import subprocess
 import sys
 import tempfile
-from dataclasses import dataclass
 from typing import Any, Dict
 from unittest import mock
 
 import pytest
+from ray.runtime_env.runtime_env import (
+    RuntimeEnvConfig,
+    _merge_runtime_env,
+)
 
 import ray
-import ray._private.ray_constants as ray_constants
 from ray._private.runtime_env.uri_cache import URICache
 from ray._private.runtime_env.utils import (
     SubprocessCalledProcessError,
@@ -21,10 +24,8 @@ from ray._private.test_utils import (
     chdir,
 )
 from ray.runtime_env import RuntimeEnv
-from ray.runtime_env.runtime_env import (
-    RuntimeEnvConfig,
-    _merge_runtime_env,
-)
+
+import ray._private.ray_constants as ray_constants
 
 
 def test_runtime_env_merge():

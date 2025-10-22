@@ -106,7 +106,7 @@ class GpuProfilingManager:
         try:
             subprocess.check_output(["nvidia-smi"], stderr=subprocess.DEVNULL)
             return True
-        except Exception:
+        except (subprocess.CalledProcessError, FileNotFoundError):
             return False
 
     @classmethod

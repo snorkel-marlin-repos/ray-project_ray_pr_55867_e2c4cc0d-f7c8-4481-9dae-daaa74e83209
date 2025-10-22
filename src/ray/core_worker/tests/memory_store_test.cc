@@ -26,22 +26,23 @@
 #include "mock/ray/core_worker/memory_store.h"
 #include "ray/common/status.h"
 #include "ray/common/status_or.h"
-#include "ray/common/test_utils.h"
+#include "ray/common/test_util.h"
 
 namespace ray {
 namespace core {
 
-namespace {
-
-std::shared_ptr<ray::LocalMemoryBuffer> MakeLocalMemoryBufferFromString(
-    const std::string &str) {
-  auto metadata = const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(str.data()));
+inline std::shared_ptr<ray::LocalMemoryBuffer> MakeBufferFromString(const uint8_t *data,
+                                                                    size_t data_size) {
+  auto metadata = const_cast<uint8_t *>(data);
   auto meta_buffer =
-      std::make_shared<ray::LocalMemoryBuffer>(metadata, str.size(), /*copy_data=*/true);
+      std::make_shared<ray::LocalMemoryBuffer>(metadata, data_size, /*copy_data=*/true);
   return meta_buffer;
 }
 
-}  // namespace
+inline std::shared_ptr<ray::LocalMemoryBuffer> MakeLocalMemoryBufferFromString(
+    const std::string &str) {
+  return MakeBufferFromString(reinterpret_cast<const uint8_t *>(str.data()), str.size());
+}
 
 TEST(TestMemoryStore, TestReportUnhandledErrors) {
   std::vector<std::shared_ptr<RayObject>> results;

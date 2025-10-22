@@ -1,6 +1,5 @@
-import sys
-
 import pytest
+import sys
 
 import ray
 from ray._common.test_utils import (

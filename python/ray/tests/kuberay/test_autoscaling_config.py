@@ -1,23 +1,23 @@
 import copy
-import platform
-import sys
 from pathlib import Path
+import platform
+import requests
+import sys
 from typing import Any, Dict, Optional, Type
 from unittest import mock
+import yaml
 
 import pytest
-import requests
-import yaml
 
 from ray.autoscaler._private.kuberay.autoscaling_config import (
     GKE_TPU_ACCELERATOR_LABEL,
     GKE_TPU_TOPOLOGY_LABEL,
-    AutoscalingConfigProducer,
     _derive_autoscaling_config_from_ray_cr,
-    _get_custom_resources,
-    _get_num_tpus,
-    _get_ray_resources_from_group_spec,
+    AutoscalingConfigProducer,
     _round_up_k8s_quantity,
+    _get_num_tpus,
+    _get_custom_resources,
+    _get_ray_resources_from_group_spec,
 )
 from ray.autoscaler._private.kuberay.utils import tpu_node_selectors_to_type
 

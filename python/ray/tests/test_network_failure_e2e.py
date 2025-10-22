@@ -1,13 +1,13 @@
-import json
 import sys
-import threading
+import json
+
 from time import sleep
-
 import pytest
-
+import threading
 from ray._common.test_utils import wait_for_condition
 from ray.tests.conftest_docker import *  # noqa
 from ray.tests.conftest_docker import gen_head_node, gen_worker_node
+
 
 SLEEP_TASK_SCRIPTS = """
 import ray

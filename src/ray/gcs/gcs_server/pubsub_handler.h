@@ -19,7 +19,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "ray/gcs/gcs_server/grpc_service_interfaces.h"
-#include "ray/pubsub/gcs_publisher.h"
+#include "ray/gcs/pubsub/gcs_pub_sub.h"
 
 namespace ray {
 namespace gcs {
@@ -30,7 +30,7 @@ namespace gcs {
 class InternalPubSubHandler : public rpc::InternalPubSubGcsServiceHandler {
  public:
   InternalPubSubHandler(instrumented_io_context &io_service,
-                        pubsub::GcsPublisher &gcs_publisher);
+                        gcs::GcsPublisher &gcs_publisher);
 
   void HandleGcsPublish(rpc::GcsPublishRequest request,
                         rpc::GcsPublishReply *reply,
@@ -51,7 +51,7 @@ class InternalPubSubHandler : public rpc::InternalPubSubGcsServiceHandler {
  private:
   /// Not owning the io service, to allow sharing it with pubsub::Publisher.
   instrumented_io_context &io_service_;
-  pubsub::GcsPublisher &gcs_publisher_;
+  gcs::GcsPublisher &gcs_publisher_;
   absl::flat_hash_map<std::string, absl::flat_hash_set<UniqueID>> sender_to_subscribers_;
 };
 
