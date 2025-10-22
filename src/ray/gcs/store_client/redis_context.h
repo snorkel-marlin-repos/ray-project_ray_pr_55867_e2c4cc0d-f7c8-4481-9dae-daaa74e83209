@@ -27,6 +27,7 @@
 #include "ray/stats/metric.h"
 #include "ray/stats/tag_defs.h"
 #include "ray/util/exponential_backoff.h"
+#include "src/ray/protobuf/gcs.pb.h"
 
 extern "C" {
 #include "hiredis/hiredis.h"
@@ -62,7 +63,7 @@ class CallbackReply {
   const std::string &ReadAsString() const;
 
   /// Read this reply data as a string array.
-  const std::vector<std::optional<std::string>> &ReadAsStringArray() const;
+  [[nodiscard]] const std::vector<std::optional<std::string>> &ReadAsStringArray() const;
 
   /// Read this reply data as a scan array.
   ///

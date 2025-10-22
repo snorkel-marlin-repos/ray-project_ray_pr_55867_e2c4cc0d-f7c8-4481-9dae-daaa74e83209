@@ -1,8 +1,7 @@
-import subprocess
 import sys
-from unittest.mock import patch
-
+import subprocess
 import pytest
+from unittest.mock import patch
 
 import ray
 from ray._private.accelerators import NeuronAcceleratorManager

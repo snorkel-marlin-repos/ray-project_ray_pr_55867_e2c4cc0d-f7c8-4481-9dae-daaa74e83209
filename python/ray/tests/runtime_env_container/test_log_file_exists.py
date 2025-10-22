@@ -1,10 +1,9 @@
-import argparse
-import re
-from pathlib import Path
-
 import ray
-from ray._common.test_utils import wait_for_condition
+from pathlib import Path
+import re
 from ray.util.state import list_tasks
+from ray._common.test_utils import wait_for_condition
+import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--image", type=str, help="The docker image to use for Ray worker")

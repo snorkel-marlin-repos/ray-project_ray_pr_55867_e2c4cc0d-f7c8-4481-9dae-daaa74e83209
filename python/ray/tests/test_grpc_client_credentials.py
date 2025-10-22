@@ -1,7 +1,7 @@
 import sys
 
-import grpc
 import pytest
+import grpc
 
 from ray.util.client.worker import Worker
 

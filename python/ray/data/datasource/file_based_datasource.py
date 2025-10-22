@@ -140,6 +140,7 @@ class FileBasedDatasource(Datasource):
         self._partitioning = partitioning
         self._ignore_missing_paths = ignore_missing_paths
         self._include_paths = include_paths
+        self._unresolved_paths = paths
         paths, self._filesystem = _resolve_paths_and_filesystem(paths, filesystem)
         self._filesystem = RetryingPyFileSystem.wrap(
             self._filesystem, retryable_errors=self._data_context.retried_io_errors
@@ -272,7 +273,8 @@ class FileBasedDatasource(Datasource):
                     num_threads = 0
 
                 if num_threads > 0:
-                    num_threads = min(num_threads, len(read_paths))
+                    if len(read_paths) < num_threads:
+                        num_threads = len(read_paths)
 
                     logger.debug(
                         f"Reading {len(read_paths)} files with {num_threads} threads."

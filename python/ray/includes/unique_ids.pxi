@@ -4,6 +4,9 @@ We define different types for different IDs for type safety.
 See https://github.com/ray-project/ray/issues/3721.
 """
 
+# WARNING: Any additional ID types defined in this file must be added to the
+# _ID_TYPES list at the bottom of this file.
+
 import logging
 import os
 
@@ -427,3 +430,17 @@ cdef class PlacementGroupID(BaseID):
 
     cdef size_t hash(self):
         return self.data.Hash()
+
+_ID_TYPES = [
+    ActorClassID,
+    ActorID,
+    NodeID,
+    JobID,
+    WorkerID,
+    FunctionID,
+    ObjectID,
+    TaskID,
+    UniqueID,
+    PlacementGroupID,
+    ClusterID,
+]

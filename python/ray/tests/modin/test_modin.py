@@ -17,12 +17,10 @@
 # http://github.com/modin-project/modin/master/modin/pandas/test/test_general.py
 
 import sys
-
-import numpy as np
-import pandas
 import pytest
+import pandas
+import numpy as np
 from numpy.testing import assert_array_equal
-
 from ray.tests.conftest import ray_start_regular_shared  # noqa F401
 
 modin_installed = True
@@ -38,9 +36,8 @@ skip = not modin_installed
 pytestmark = pytest.mark.skipif(skip, reason="Outdated or missing Modin dependency")
 
 if not skip:
-    import modin.pandas as pd
-
     from ray.tests.modin.modin_test_utils import df_equals
+    import modin.pandas as pd
 
 
 @pytest.fixture(autouse=True)

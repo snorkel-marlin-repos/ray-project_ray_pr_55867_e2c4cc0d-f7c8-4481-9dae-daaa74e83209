@@ -1,16 +1,13 @@
-import logging
-import multiprocessing
-import os
-import subprocess
-import sys
-import time
-
-import pytest
-
 import ray
-from ray._common.test_utils import wait_for_condition
-
+import pytest
+import multiprocessing
+import subprocess
+import time
 import psutil
+import logging
+import os
+import sys
+from ray._common.test_utils import wait_for_condition
 
 logger = logging.getLogger(__name__)
 

@@ -2,24 +2,25 @@ import asyncio
 import json
 import os
 import sys
-import tempfile
-from collections import defaultdict
 from pathlib import Path
+import tempfile
 
-import pytest
-import requests
+from collections import defaultdict
+from ray._private.test_utils import check_call_subprocess
 
 import ray
-from ray._common.test_utils import wait_for_condition
+import requests
+import pytest
+
 from ray._private.profiling import chrome_tracing_dump
-from ray._private.test_utils import check_call_subprocess
 from ray.util.state import (
     get_actor,
-    list_actors,
-    list_nodes,
     list_tasks,
+    list_actors,
     list_workers,
+    list_nodes,
 )
+from ray._common.test_utils import wait_for_condition
 
 
 def test_timeline(shutdown_only):

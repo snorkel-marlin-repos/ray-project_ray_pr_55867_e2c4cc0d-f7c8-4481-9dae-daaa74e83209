@@ -128,14 +128,19 @@ def plan_project_op(
             # 1. evaluate / add expressions
             if exprs:
                 block_accessor = BlockAccessor.for_block(block)
-                # Add/update with expression results
-                result_block = block
-                for name, expr in exprs.items():
-                    result = eval_expr(expr, result_block)
-                    result_block_accessor = BlockAccessor.for_block(result_block)
-                    result_block = result_block_accessor.upsert_column(name, result)
+                new_columns = {}
+                for col_name in block_accessor.column_names():
+                    # For Arrow blocks, block[col_name] gives us a ChunkedArray
+                    # For Pandas blocks, block[col_name] gives us a Series
+                    new_columns[col_name] = block[col_name]
 
-                block = result_block
+                # Add/update with expression results
+                for name, expr in exprs.items():
+                    result = eval_expr(expr, block)
+                    new_columns[name] = result
+
+                # Create a new block from the combined columns and add it
+                block = BlockAccessor.batch_to_block(new_columns)
 
             # 2. (optional) column projection
             if columns:
@@ -149,7 +154,7 @@ def plan_project_op(
 
             return block
         except Exception as e:
-            _try_wrap_udf_exception(e)
+            _try_wrap_udf_exception(e, block)
 
     compute = get_compute(op._compute)
     transform_fn = _generate_transform_fn_for_map_block(fn)
@@ -208,7 +213,7 @@ def plan_filter_op(
             try:
                 return block.filter(expression)
             except Exception as e:
-                _try_wrap_udf_exception(e)
+                _try_wrap_udf_exception(e, block)
 
         transform_fn = _generate_transform_fn_for_map_batches(filter_batch_fn)
         map_transformer = _create_map_transformer_for_map_batches_op(
@@ -348,7 +353,7 @@ def _get_udf(
                         **fn_kwargs,
                     )
                 except Exception as e:
-                    _try_wrap_udf_exception(e)
+                    _try_wrap_udf_exception(e, item)
 
         elif inspect.isasyncgenfunction(udf.__call__):
 
@@ -383,7 +388,7 @@ def _get_udf(
                         **fn_kwargs,
                     )
                 except Exception as e:
-                    _try_wrap_udf_exception(e)
+                    _try_wrap_udf_exception(e, item)
 
     else:
 
@@ -391,7 +396,7 @@ def _get_udf(
             try:
                 return udf(item, *fn_args, **fn_kwargs)
             except Exception as e:
-                _try_wrap_udf_exception(e)
+                _try_wrap_udf_exception(e, item)
 
         def init_fn():
             pass
@@ -403,11 +408,14 @@ def _try_wrap_udf_exception(e: Exception, item: Any = None):
     """If the Ray Debugger is enabled, keep the full stack trace unmodified
     so that the debugger can stop at the initial unhandled exception.
     Otherwise, clear the stack trace to omit noisy internal code path."""
+    error_message = f"Failed to process the following data block: {item}"
+
     ctx = ray.data.DataContext.get_current()
     if _is_ray_debugger_post_mortem_enabled() or ctx.raise_original_map_exception:
+        logger.error(error_message)
         raise e
     else:
-        raise UserCodeException("UDF failed to process a data block.") from e
+        raise UserCodeException(error_message) from e
 
 
 # Following are util functions for converting UDFs to `MapTransformCallable`s.

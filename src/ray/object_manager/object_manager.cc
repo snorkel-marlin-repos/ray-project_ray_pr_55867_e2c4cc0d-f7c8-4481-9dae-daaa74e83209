@@ -21,6 +21,7 @@
 #include <utility>
 #include <vector>
 
+#include "ray/common/common_protocol.h"
 #include "ray/object_manager/plasma/store_runner.h"
 #include "ray/object_manager/spilled_object_reader.h"
 #include "ray/stats/metric_defs.h"

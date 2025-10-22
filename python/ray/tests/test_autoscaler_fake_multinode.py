@@ -1,8 +1,7 @@
+import time
+import pytest
 import platform
 import sys
-import time
-
-import pytest
 
 import ray
 from ray.cluster_utils import AutoscalingCluster

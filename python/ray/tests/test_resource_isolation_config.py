@@ -1,6 +1,5 @@
-import sys
-
 import pytest
+import sys
 
 from ray._private import utils
 from ray._private.resource_isolation_config import ResourceIsolationConfig

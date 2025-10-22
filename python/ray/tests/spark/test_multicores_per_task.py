@@ -1,9 +1,7 @@
-import os
 import sys
-
 import pytest
+import os
 from pyspark.sql import SparkSession
-
 from ray.tests.spark.test_basic import _setup_ray_on_spark_envs
 from ray.tests.spark.test_GPU import RayOnSparkGPUClusterTestBase
 

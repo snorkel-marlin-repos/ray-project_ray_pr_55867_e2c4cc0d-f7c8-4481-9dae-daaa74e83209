@@ -3,7 +3,6 @@
 Tests that require a standalone Ray cluster (for example, testing ray.init or shutdown
 behavior) should go in test_multiprocessing_standalone.py.
 """
-import multiprocessing as mp
 import os
 import platform
 import queue
@@ -11,13 +10,15 @@ import random
 import sys
 import tempfile
 import time
+import multiprocessing as mp
 from collections import defaultdict
 
 import pytest
 
+
 import ray
 from ray._common.test_utils import SignalActor
-from ray.util.multiprocessing import JoinableQueue, Pool, TimeoutError
+from ray.util.multiprocessing import Pool, TimeoutError, JoinableQueue
 
 
 @pytest.fixture(scope="module")

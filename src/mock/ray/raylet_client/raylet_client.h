@@ -31,10 +31,10 @@ class MockRayletClientInterface : public RayletClientInterface {
        const int64_t backlog_size,
        const bool is_selected_based_on_locality),
       (override));
-  MOCK_METHOD(void,
+  MOCK_METHOD(ray::Status,
               ReturnWorkerLease,
               (int worker_port,
-               const LeaseID &lease_id,
+               const WorkerID &worker_id,
                bool disconnect_worker,
                const std::string &disconnect_worker_error_detail,
                bool worker_exiting),

@@ -19,7 +19,7 @@
 #include <utility>
 #include <vector>
 
-#include "ray/common/protobuf_utils.h"
+#include "ray/gcs/pb_util.h"
 
 namespace ray {
 namespace core {

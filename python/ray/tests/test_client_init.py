@@ -1,18 +1,20 @@
 """Client tests that run their own init (as with init_and_serve) live here"""
 
-import random
-import subprocess
-import sys
 import time
+import random
+import sys
+import subprocess
 from unittest.mock import patch
 
 import pytest
 
-import ray
-import ray.core.generated.ray_client_pb2 as ray_client_pb2
 import ray.util.client.server.server as ray_client_server
-from ray.cluster_utils import cluster_not_supported
+import ray.core.generated.ray_client_pb2 as ray_client_pb2
+
 from ray.util.client import _ClientContext
+from ray.cluster_utils import cluster_not_supported
+
+import ray
 
 
 @ray.remote

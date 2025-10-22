@@ -5,7 +5,7 @@ import sys
 import tempfile
 import unittest
 import urllib
-from typing import Any, Dict
+from typing import Dict, Any
 from unittest import mock
 from unittest.mock import MagicMock, Mock, patch
 

@@ -48,7 +48,7 @@ from ray.rllib.utils.annotations import (
     OldAPIStack,
     OverrideToImplementCustomLogic_CallToSuperRecommended,
 )
-from ray._common.deprecation import (
+from ray.rllib.utils.deprecation import (
     DEPRECATED_VALUE,
     Deprecated,
     deprecation_warning,
@@ -143,7 +143,6 @@ class AlgorithmConfig(_Config):
         # Map any agent ID to "default_policy".
         return DEFAULT_MODULE_ID
 
-    # @OldAPIStack
     # TODO (sven): Deprecate in new API stack.
     @staticmethod
     def DEFAULT_POLICY_MAPPING_FN(aid, episode, worker, **kwargs):

@@ -1,10 +1,10 @@
 import os
+import pytest
 import sys
 
-import pytest
-
-import ray
 from ray._private.runtime_env import virtualenv_utils
+import ray
+
 
 if not os.environ.get("CI"):
     # This flags turns on the local development that link against current ray

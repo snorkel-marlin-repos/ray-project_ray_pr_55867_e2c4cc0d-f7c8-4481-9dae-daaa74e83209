@@ -6,7 +6,8 @@ from unittest import mock
 
 import pytest
 
-from ray.autoscaler._private.aws.node_provider import TAG_BATCH_DELAY, AWSNodeProvider
+from ray.autoscaler._private.aws.node_provider import AWSNodeProvider
+from ray.autoscaler._private.aws.node_provider import TAG_BATCH_DELAY
 
 
 def mock_create_tags(provider, batch_updates):

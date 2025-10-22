@@ -1,19 +1,17 @@
-import os
 import sys
-
-import pytest
-
+import os
 from ray import (
-    ActorClassID,
     ActorID,
-    ClusterID,
-    FunctionID,
     JobID,
-    NodeID,
-    PlacementGroupID,
     TaskID,
+    NodeID,
     WorkerID,
+    FunctionID,
+    ActorClassID,
+    ClusterID,
+    PlacementGroupID,
 )
+import pytest
 
 
 @pytest.mark.parametrize(

@@ -1,5 +1,5 @@
-import sys
 from inspect import getmembers, isfunction, ismodule
+import sys
 
 import pytest
 

@@ -1,8 +1,7 @@
 import asyncio
+import pytest
 import sys
 import time
-
-import pytest
 
 import ray
 from ray._private.test_utils import run_string_as_driver

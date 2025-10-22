@@ -14,7 +14,6 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
-#include <filesystem>
 #include <list>
 #include <memory>
 #include <string>
@@ -26,11 +25,11 @@
 #include "mock/ray/gcs/gcs_server/gcs_node_manager.h"
 #include "ray/common/asio/instrumented_io_context.h"
 #include "ray/common/runtime_env_manager.h"
-#include "ray/common/test_utils.h"
 #include "ray/gcs/gcs_server/gcs_actor.h"
 #include "ray/gcs/gcs_server/gcs_actor_manager.h"
 #include "ray/gcs/gcs_server/gcs_function_manager.h"
 #include "ray/gcs/store_client/in_memory_store_client.h"
+#include "ray/gcs/tests/gcs_test_util.h"
 #include "ray/pubsub/publisher.h"
 #include "ray/rpc/worker/core_worker_client.h"
 #include "ray/rpc/worker/core_worker_client_pool.h"
@@ -155,7 +154,7 @@ class GcsActorManagerTest : public ::testing::Test {
         /*subscriber_timeout_ms=*/absl::ToInt64Microseconds(absl::Seconds(30)),
         /*batch_size=*/100);
 
-    gcs_publisher_ = std::make_unique<pubsub::GcsPublisher>(std::move(publisher));
+    gcs_publisher_ = std::make_unique<gcs::GcsPublisher>(std::move(publisher));
     gcs_table_storage_ =
         std::make_unique<gcs::GcsTableStorage>(std::make_unique<InMemoryStoreClient>());
     kv_ = std::make_unique<gcs::MockInternalKVInterface>();
@@ -228,8 +227,8 @@ class GcsActorManagerTest : public ::testing::Test {
       const std::string &name = "",
       const std::string &ray_namespace = "test") {
     std::promise<std::shared_ptr<gcs::GcsActor>> promise;
-    auto request =
-        GenRegisterActorRequest(job_id, max_restarts, detached, name, ray_namespace);
+    auto request = Mocker::GenRegisterActorRequest(
+        job_id, max_restarts, detached, name, ray_namespace);
     // `DestroyActor` triggers some asynchronous operations.
     // If we register an actor after destroying an actor, it may result in multithreading
     // reading and writing the same variable. In order to avoid the problem of
@@ -262,7 +261,7 @@ class GcsActorManagerTest : public ::testing::Test {
   std::unique_ptr<rpc::CoreWorkerClientPool> worker_client_pool_;
   absl::flat_hash_map<JobID, std::string> job_namespace_table_;
   std::unique_ptr<gcs::GcsActorManager> gcs_actor_manager_;
-  std::shared_ptr<pubsub::GcsPublisher> gcs_publisher_;
+  std::shared_ptr<gcs::GcsPublisher> gcs_publisher_;
   std::unique_ptr<ray::RuntimeEnvManager> runtime_env_mgr_;
   const std::chrono::milliseconds timeout_ms_{2000};
   absl::Mutex mutex_;
@@ -319,7 +318,7 @@ TEST_F(GcsActorManagerTest, TestBasic) {
       "DEPENDENCIES_UNREADY", "PENDING_CREATION", "ALIVE", "DEAD"};
   std::vector<std::string> vc;
   for (int i = 0; i < num_retry; i++) {
-    ReadContentFromFile(vc, log_dir_ + "/export_events/event_EXPORT_ACTOR.log");
+    Mocker::ReadContentFromFile(vc, log_dir_ + "/export_events/event_EXPORT_ACTOR.log");
     if (static_cast<int>(vc.size()) == num_export_events) {
       for (int event_idx = 0; event_idx < num_export_events; event_idx++) {
         json export_event_as_json = json::parse(vc[event_idx]);
@@ -343,7 +342,7 @@ TEST_F(GcsActorManagerTest, TestBasic) {
       vc.clear();
     }
   }
-  ReadContentFromFile(vc, log_dir_ + "/export_events/event_EXPORT_ACTOR.log");
+  Mocker::ReadContentFromFile(vc, log_dir_ + "/export_events/event_EXPORT_ACTOR.log");
   std::ostringstream lines;
   for (auto line : vc) {
     lines << line << "\n";

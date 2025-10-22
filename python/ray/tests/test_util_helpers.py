@@ -1,10 +1,8 @@
-import sys
-
 import pytest
-
+import sys
 import ray
-from ray._common.test_utils import SignalActor
 from ray.util import as_completed, map_unordered
+from ray._common.test_utils import SignalActor
 
 
 @pytest.fixture(scope="module")

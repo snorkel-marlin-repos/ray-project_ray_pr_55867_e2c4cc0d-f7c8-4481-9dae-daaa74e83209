@@ -14,6 +14,7 @@
 
 #include "ray/common/lease/lease_spec.h"
 
+#include "ray/common/common_protocol.h"
 #include "ray/common/function_descriptor.h"
 #include "ray/common/runtime_env_common.h"
 

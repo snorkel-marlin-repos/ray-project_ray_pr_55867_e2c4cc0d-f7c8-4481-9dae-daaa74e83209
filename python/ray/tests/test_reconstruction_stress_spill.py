@@ -1,8 +1,8 @@
 import signal
 import sys
 
-import numpy as np
 import pytest
+import numpy as np
 
 import ray
 
@@ -16,8 +16,6 @@ def config(request):
         "health_check_period_ms": 100,
         "health_check_failure_threshold": 10,
         "object_timeout_milliseconds": 200,
-        # Required for reducing the retry time of RequestWorkerLease
-        "raylet_rpc_server_reconnect_timeout_s": 0,
     }
     yield config
 

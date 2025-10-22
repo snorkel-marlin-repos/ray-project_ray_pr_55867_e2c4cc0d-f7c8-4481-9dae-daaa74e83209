@@ -1,15 +1,11 @@
-import difflib
 import platform
-import shutil
 import subprocess
-import sys
-import tempfile
 from pathlib import Path
 from typing import List, Optional
 
 import click
 import runfiles
-from networkx import DiGraph, ancestors as networkx_ancestors, topological_sort
+from networkx import DiGraph, topological_sort
 
 from ci.raydepsets.workspace import Depset, Workspace
 
@@ -48,17 +44,11 @@ def cli():
 @click.option(
     "--uv-cache-dir", default=None, help="The directory to cache uv dependencies"
 )
-@click.option(
-    "--check",
-    is_flag=True,
-    help="Check the the compiled dependencies are valid. Only compatible with generating all dependency sets.",
-)
 def build(
     config_path: str,
     workspace_dir: Optional[str],
     name: Optional[str],
     uv_cache_dir: Optional[str],
-    check: Optional[bool],
 ):
     """
     Build dependency sets from a config file.
@@ -69,17 +59,11 @@ def build(
         config_path=config_path,
         workspace_dir=workspace_dir,
         uv_cache_dir=uv_cache_dir,
-        check=check,
     )
-    manager.execute(name)
-    if check:
-        try:
-            manager.diff_lock_files()
-        except RuntimeError as e:
-            click.echo(e, err=True)
-            sys.exit(1)
-        finally:
-            manager.cleanup()
+    if name:
+        manager.execute_single(_get_depset(manager.config.depsets, name))
+    else:
+        manager.execute()
 
 
 class DependencySetManager:
@@ -88,62 +72,13 @@ class DependencySetManager:
         config_path: str = None,
         workspace_dir: Optional[str] = None,
         uv_cache_dir: Optional[str] = None,
-        check: Optional[bool] = False,
     ):
         self.workspace = Workspace(workspace_dir)
         self.config = self.workspace.load_config(config_path)
-        if check:
-            self.temp_dir = tempfile.mkdtemp()
-            self.output_paths = self.get_output_paths()
-            self.copy_to_temp_dir()
         self.build_graph = DiGraph()
         self._build()
         self._uv_binary = _uv_binary()
         self._uv_cache_dir = uv_cache_dir
-
-    def get_output_paths(self) -> List[Path]:
-        output_paths = []
-        for depset in self.config.depsets:
-            output_paths.append(Path(depset.output))
-        return output_paths
-
-    def copy_to_temp_dir(self):
-        """Copy the lock files from source file paths to temp dir."""
-        for output_path in self.output_paths:
-            source_fp, target_fp = self.get_source_and_dest(output_path)
-            target_fp.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(
-                source_fp,
-                target_fp,
-            )
-
-    def get_diffs(self) -> List[str]:
-        diffs = []
-        for output_path in self.output_paths:
-            new_lock_file_fp, old_lock_file_fp = self.get_source_and_dest(output_path)
-            old_lock_file_contents = self.read_lock_file(old_lock_file_fp)
-            new_lock_file_contents = self.read_lock_file(new_lock_file_fp)
-            for diff in difflib.unified_diff(
-                old_lock_file_contents,
-                new_lock_file_contents,
-                fromfile=new_lock_file_fp.as_posix(),
-                tofile=old_lock_file_fp.as_posix(),
-                lineterm="",
-            ):
-                diffs.append(diff)
-        return diffs
-
-    def diff_lock_files(self):
-        diffs = self.get_diffs()
-        if len(diffs) > 0:
-            raise RuntimeError(
-                "Lock files are not up to date. Please update lock files and push the changes.\n"
-                + "".join(diffs)
-            )
-        click.echo("Lock files are up to date.")
-
-    def get_source_and_dest(self, output_path: str) -> tuple[Path, Path]:
-        return (self.get_path(output_path), (Path(self.temp_dir) / output_path))
 
     def _build(self):
         for depset in self.config.depsets:
@@ -165,27 +100,15 @@ class DependencySetManager:
             else:
                 raise ValueError(f"Invalid operation: {depset.operation}")
 
-    def subgraph_dependency_nodes(self, depset_name: str):
-        dependency_nodes = networkx_ancestors(self.build_graph, depset_name)
-        nodes = dependency_nodes | {depset_name}
-        self.build_graph = self.build_graph.subgraph(nodes).copy()
-
-    def execute(self, single_depset_name: Optional[str] = None):
-        if single_depset_name:
-            # check if the depset exists
-            _get_depset(self.config.depsets, single_depset_name)
-            self.subgraph_dependency_nodes(single_depset_name)
-
+    def execute(self):
         for node in topological_sort(self.build_graph):
             depset = self.build_graph.nodes[node]["depset"]
             self.execute_single(depset)
 
-    def exec_uv_cmd(
-        self, cmd: str, args: List[str], stdin: Optional[bytes] = None
-    ) -> str:
+    def exec_uv_cmd(self, cmd: str, args: List[str]) -> str:
         cmd = [self._uv_binary, "pip", cmd, *args]
         click.echo(f"Executing command: {cmd}")
-        status = subprocess.run(cmd, cwd=self.workspace.dir, input=stdin)
+        status = subprocess.run(cmd, cwd=self.workspace.dir)
         if status.returncode != 0:
             raise RuntimeError(f"Failed to execute command: {cmd}")
         return status.stdout
@@ -199,7 +122,6 @@ class DependencySetManager:
                 output=depset.output,
                 append_flags=depset.append_flags,
                 override_flags=depset.override_flags,
-                packages=depset.packages,
             )
         elif depset.operation == "subset":
             self.subset(
@@ -225,16 +147,14 @@ class DependencySetManager:
     def compile(
         self,
         constraints: List[str],
+        requirements: List[str],
         name: str,
         output: str,
         append_flags: Optional[List[str]] = None,
         override_flags: Optional[List[str]] = None,
-        packages: Optional[List[str]] = None,
-        requirements: Optional[List[str]] = None,
     ):
         """Compile a dependency set."""
         args = DEFAULT_UV_FLAGS.copy()
-        stdin = None
         if self._uv_cache_dir:
             args.extend(["--cache-dir", self._uv_cache_dir])
         if override_flags:
@@ -247,13 +167,9 @@ class DependencySetManager:
         if requirements:
             for requirement in requirements:
                 args.extend([requirement])
-        if packages:
-            # need to add a dash to process stdin
-            args.append("-")
-            stdin = _get_bytes(packages)
         if output:
             args.extend(["-o", output])
-        self.exec_uv_cmd("compile", args, stdin)
+        self.exec_uv_cmd("compile", args)
 
     def subset(
         self,
@@ -303,14 +219,8 @@ class DependencySetManager:
             override_flags=override_flags,
         )
 
-    def read_lock_file(self, file_path: Path) -> List[str]:
-        if not file_path.exists():
-            raise RuntimeError(f"Lock file {file_path} does not exist")
-        with open(file_path, "r") as f:
-            return f.readlines()
-
-    def get_path(self, path: str) -> Path:
-        return Path(self.workspace.dir) / path
+    def get_path(self, path: str) -> str:
+        return (Path(self.workspace.dir) / path).as_posix()
 
     def check_subset_exists(self, source_depset: Depset, requirements: List[str]):
         for req in requirements:
@@ -318,14 +228,6 @@ class DependencySetManager:
                 raise RuntimeError(
                     f"Requirement {req} is not a subset of {source_depset.name}"
                 )
-
-    def cleanup(self):
-        if self.temp_dir:
-            shutil.rmtree(self.temp_dir)
-
-
-def _get_bytes(packages: List[str]) -> bytes:
-    return ("\n".join(packages) + "\n").encode("utf-8")
 
 
 def _get_depset(depsets: List[Depset], name: str) -> Depset:

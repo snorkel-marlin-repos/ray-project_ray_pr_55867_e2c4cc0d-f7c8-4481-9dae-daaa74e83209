@@ -31,7 +31,6 @@
 #include "ray/core_worker/task_event_buffer.h"
 #include "ray/core_worker/task_manager_interface.h"
 #include "ray/gcs/gcs_client/gcs_client.h"
-#include "ray/observability/metric_interface.h"
 #include "ray/stats/metric_defs.h"
 #include "ray/util/counter_map.h"
 #include "src/ray/protobuf/common.pb.h"
@@ -41,15 +40,13 @@
 namespace ray {
 namespace core {
 
-using std::literals::operator""sv;
-
 class ActorManager;
 
 using TaskStatusCounter = CounterMap<std::tuple<std::string, rpc::TaskStatus, bool>>;
 using PutInLocalPlasmaCallback =
     std::function<Status(const RayObject &object, const ObjectID &object_id)>;
-using AsyncRetryTaskCallback =
-    std::function<void(TaskSpecification &spec, uint32_t delay_ms)>;
+using RetryTaskCallback =
+    std::function<void(TaskSpecification &spec, bool object_recovery, uint32_t delay_ms)>;
 using ReconstructObjectCallback = std::function<void(const ObjectID &object_id)>;
 using PushErrorCallback = std::function<Status(const JobID &job_id,
                                                const std::string &type,
@@ -178,35 +175,33 @@ class TaskManager : public TaskManagerInterface {
       CoreWorkerMemoryStore &in_memory_store,
       ReferenceCounter &reference_counter,
       PutInLocalPlasmaCallback put_in_local_plasma_callback,
-      AsyncRetryTaskCallback async_retry_task_callback,
+      RetryTaskCallback retry_task_callback,
       std::function<bool(const TaskSpecification &spec)> queue_generator_resubmit,
       PushErrorCallback push_error_callback,
       int64_t max_lineage_bytes,
       worker::TaskEventBuffer &task_event_buffer,
       std::function<std::shared_ptr<ray::rpc::CoreWorkerClientInterface>(const ActorID &)>
           client_factory,
-      std::shared_ptr<gcs::GcsClient> gcs_client,
-      ray::observability::MetricInterface &task_by_state_counter)
+      std::shared_ptr<gcs::GcsClient> gcs_client)
       : in_memory_store_(in_memory_store),
         reference_counter_(reference_counter),
         put_in_local_plasma_callback_(std::move(put_in_local_plasma_callback)),
-        async_retry_task_callback_(std::move(async_retry_task_callback)),
+        retry_task_callback_(std::move(retry_task_callback)),
         queue_generator_resubmit_(std::move(queue_generator_resubmit)),
         push_error_callback_(std::move(push_error_callback)),
         max_lineage_bytes_(max_lineage_bytes),
         task_event_buffer_(task_event_buffer),
         get_actor_rpc_client_callback_(std::move(client_factory)),
-        gcs_client_(std::move(gcs_client)),
-        task_by_state_counter_(task_by_state_counter) {
+        gcs_client_(std::move(gcs_client)) {
     task_counter_.SetOnChangeCallback(
         [this](const std::tuple<std::string, rpc::TaskStatus, bool> &key)
             ABSL_EXCLUSIVE_LOCKS_REQUIRED(&mu_) {
-              task_by_state_counter_.Record(
+              ray::stats::STATS_tasks.Record(
                   task_counter_.Get(key),
-                  {{"State"sv, rpc::TaskStatus_Name(std::get<1>(key))},
-                   {"Name"sv, std::get<0>(key)},
-                   {"IsRetry"sv, std::get<2>(key) ? "1" : "0"},
-                   {"Source"sv, "owner"}});
+                  {{"State", rpc::TaskStatus_Name(std::get<1>(key))},
+                   {"Name", std::get<0>(key)},
+                   {"IsRetry", std::get<2>(key) ? "1" : "0"},
+                   {"Source", "owner"}});
             });
     reference_counter_.SetReleaseLineageCallback(
         [this](const ObjectID &object_id, std::vector<ObjectID> *ids_to_release) {
@@ -614,9 +609,9 @@ class TaskManager : public TaskManagerInterface {
   void MarkTaskNoRetryInternal(const TaskID &task_id, bool canceled)
       ABSL_LOCKS_EXCLUDED(mu_);
 
-  /// Update nested ref count info and store the task's return object.
-  /// Returns StatusOr<bool> where the bool indicates the object was returned
-  /// directly in-memory (not stored in plasma) when true.
+  /// Update nested ref count info and store the in-memory value for a task's
+  /// return object. On success, sets direct_return_out to true if the object's value
+  /// was returned directly by value (not stored in plasma).
   StatusOr<bool> HandleTaskReturn(const ObjectID &object_id,
                                   const rpc::ReturnObject &return_object,
                                   const NodeID &worker_node_id,
@@ -748,7 +743,7 @@ class TaskManager : public TaskManagerInterface {
   const PutInLocalPlasmaCallback put_in_local_plasma_callback_;
 
   /// Called when a task should be retried.
-  const AsyncRetryTaskCallback async_retry_task_callback_;
+  const RetryTaskCallback retry_task_callback_;
 
   /// For when a streaming generator task currently in progress needs to be resubmitted.
   std::function<bool(const TaskSpecification &spec)> queue_generator_resubmit_;
@@ -801,14 +796,6 @@ class TaskManager : public TaskManagerInterface {
       get_actor_rpc_client_callback_;
 
   std::shared_ptr<gcs::GcsClient> gcs_client_;
-
-  // Metric to track the number of tasks by state.
-  // Expected tags:
-  // - State: the task state, as described by rpc::TaskState proto in common.proto
-  // - Name: the name of the function called
-  // - IsRetry: whether the task is a retry
-  // - Source: component reporting, e.g., "core_worker", "executor", or "pull_manager"
-  observability::MetricInterface &task_by_state_counter_;
 
   friend class TaskManagerTest;
 };

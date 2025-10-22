@@ -11,7 +11,6 @@ ray[default] but not in ray (e.g., `pip uninstall aiohttp`) and set
 
 import os
 import sys
-
 import pytest
 
 import ray

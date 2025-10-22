@@ -6,8 +6,8 @@ import tempfile
 import time
 from typing import List
 
-import numpy as np
 import pytest
+import numpy as np
 
 import ray
 from ray._common.test_utils import wait_for_condition

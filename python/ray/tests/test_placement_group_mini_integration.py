@@ -1,8 +1,8 @@
+import pytest
 import sys
 import time
-from random import random
 
-import pytest
+from random import random
 
 import ray
 import ray.cluster_utils

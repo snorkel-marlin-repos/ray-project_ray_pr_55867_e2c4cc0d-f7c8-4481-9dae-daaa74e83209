@@ -95,7 +95,7 @@ class TestAlgorithmWithLearnerSaveAndRestore(unittest.TestCase):
         ray.init()
 
     @classmethod
-    def tearDownClass(cls) -> None:
+    def tearDowClass(cls) -> None:
         ray.shutdown()
 
     def test_save_and_restore(self):

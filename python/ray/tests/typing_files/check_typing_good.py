@@ -1,6 +1,5 @@
-from typing import Generator
-
 import ray
+from typing import Generator
 from ray import ObjectRef
 
 ray.init()

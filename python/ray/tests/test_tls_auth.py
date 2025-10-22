@@ -1,8 +1,8 @@
 # coding: utf-8
 import logging
 import os
-import subprocess
 import sys
+import subprocess
 
 import pytest
 

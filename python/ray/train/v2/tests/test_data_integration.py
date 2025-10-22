@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 import pytest
 
 import ray.data
@@ -7,15 +9,12 @@ from ray.data._internal.iterator.stream_split_iterator import StreamSplitDataIte
 from ray.data.tests.conftest import restore_data_context  # noqa: F401
 from ray.train.v2._internal.callbacks.datasets import DatasetsSetupCallback
 from ray.train.v2._internal.data_integration.interfaces import DatasetShardMetadata
+from ray.train.v2._internal.execution.context import TrainRunContext
 from ray.train.v2._internal.execution.worker_group.worker_group import (
     WorkerGroupContext,
 )
 from ray.train.v2.api.data_parallel_trainer import DataParallelTrainer
-from ray.train.v2.tests.util import (
-    DummyObjectRefWrapper,
-    DummyWorkerGroup,
-    create_dummy_run_context,
-)
+from ray.train.v2.tests.util import DummyObjectRefWrapper, DummyWorkerGroup
 
 # TODO(justinvyu): Bring over more tests from ray/air/tests/test_new_dataset_config.py
 
@@ -78,18 +77,17 @@ def test_dataset_setup_callback(ray_start_4_cpus):
         num_workers=scaling_config.num_workers,
         resources_per_worker=scaling_config.resources_per_worker,
     )
-    train_run_context = create_dummy_run_context(
-        datasets={"train": train_ds, "valid": valid_ds},
-        dataset_config=data_config,
-        scaling_config=scaling_config,
-    )
     worker_group = DummyWorkerGroup(
-        train_run_context=train_run_context,
+        train_run_context=MagicMock(spec=TrainRunContext),
         worker_group_context=worker_group_context,
     )
     worker_group._start()
 
-    callback = DatasetsSetupCallback(train_run_context)
+    callback = DatasetsSetupCallback(
+        datasets={"train": train_ds, "valid": valid_ds},
+        data_config=data_config,
+        scaling_config=scaling_config,
+    )
     dataset_manager_for_each_worker = callback.before_init_train_context(
         worker_group.get_workers()
     )["dataset_shard_provider"]

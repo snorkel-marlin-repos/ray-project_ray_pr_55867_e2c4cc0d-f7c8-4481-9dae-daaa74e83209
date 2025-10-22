@@ -139,13 +139,9 @@ class SplitCoordinator:
         locality_hints: Optional[List[NodeIdStr]],
     ):
         dataset = dataset_wrapper._dataset
-
         # Set current DataContext.
-        # This needs to be a deep copy so that updates to the base dataset's
-        # context does not affect this process's global DataContext.
-        self._data_context = dataset.context.copy()
+        self._data_context = dataset.context
         ray.data.DataContext._set_current(self._data_context)
-
         if self._data_context.execution_options.locality_with_output is True:
             self._data_context.execution_options.locality_with_output = locality_hints
             logger.info(f"Auto configuring locality_with_output={locality_hints}")

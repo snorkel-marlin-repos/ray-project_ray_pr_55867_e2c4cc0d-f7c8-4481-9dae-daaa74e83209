@@ -1,8 +1,8 @@
-import argparse
 import asyncio
 import logging
-
 import requests
+import argparse
+
 from fastapi import FastAPI
 from starlette.responses import StreamingResponse
 
